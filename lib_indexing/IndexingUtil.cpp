@@ -73,6 +73,8 @@ int select_far(const TimeSeriesBatch& batch, const BatchRange& range, const Batc
   for(int i = 0; i < N; i++) {    
     if(idx[i + range.start] != comparison_sequence) {
       cum_sum_distances[i] = pow(dtw(batch[comparison_sequence], batch[idx[i + range.start]], band_percentage), 2);
+    } else {
+      cum_sum_distances[i] = 0;
     }
     total += cum_sum_distances[i];
   }
@@ -86,9 +88,9 @@ int select_far(const TimeSeriesBatch& batch, const BatchRange& range, const Batc
   std::mt19937 generator(rand_dev());
   std::uniform_real_distribution<float>  distr(0.0, 1.0); 
   float p = distr(generator);
-  int pos;
+  int pos = 0;
   for(pos = 0; pos < N; pos++) {
-    if(p < cum_sum_distances[pos]) break;
+    if(p <= cum_sum_distances[pos]) break;
   }
   delete[] cum_sum_distances;
   return idx[pos + range.start];

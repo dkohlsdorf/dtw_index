@@ -31,6 +31,7 @@ TimeSeriesIndex::TimeSeriesIndex(int bucket_size,
   this -> bucket_size = bucket_size;
   this -> band_percentage = band_percentage;
   this -> ts_bucket_size = ts_bucket_size;  
+  status = IDX_READY;
   root = NULL;
 }
     

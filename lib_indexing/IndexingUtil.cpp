@@ -90,7 +90,9 @@ int select_far(const TimeSeriesBatch& batch, const BatchRange& range, const Batc
   float p = distr(generator);
   int pos = 0;
   for(pos = 0; pos < N; pos++) {
-    if(p <= cum_sum_distances[pos]) break;
+    if(idx[pos + range.start] != comparison_sequence) {
+      if(p <= cum_sum_distances[pos]) break;
+    }
   }
   delete[] cum_sum_distances;
   return idx[pos + range.start];
@@ -144,7 +146,7 @@ void build_tree(const TimeSeriesBatch& batch, int bucket_size, float band_percen
 		<< "depth: " << state.depth;       
       
       TreeBuilderState right_state, left_state;      
-      int left = select_rand(batch, state.range, idx);
+      int left = select_rand(batch, state.range, idx);      
       int right = select_far(batch, state.range, idx, left, band_percentage);
       int mid = partition(batch, state.range, idx, left, right, band_percentage);
       

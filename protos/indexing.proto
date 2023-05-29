@@ -1,0 +1,16 @@
+service TimeSeries {
+  rpc insert (TimeSeries) returns (int) {}
+  rpc query (TimeSeries) returns (TimeSeriesIdx) {}
+  rpc reindex () returns () {}
+}
+
+message TimeSeries {
+  repeated float ts = 1;
+  int32 length = 2;
+  int32 dim = 3;
+}
+
+message TimeSeriesIdx {
+  repeated int32 ids = 1;
+  string messages = 2;
+}

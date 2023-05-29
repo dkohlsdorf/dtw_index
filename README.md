@@ -15,10 +15,16 @@ Actually most of them are not real unit tests but more a small test run.
 Mainly the actual index. I am testing the speedup of parallel computation
 as well as the thread safty. The performance tests can be executed
 using the ./benchmark tool. I suggest to disable logging for actual measurments.
-I am also using this to test for memory leaks or parallelisation issues. Great bianry to run
-valgrind
+I am also using this to test for memory leaks or parallelisation issues. Great bianry to run valgrind
 
-GLOG_minloglevel=1 ./benchmark
+```
+GLOG_log_dir=. valgrind -v --leak-check=full -- ./benchmark
+``` 
+
+
+```
+cmake .. -D CMAKE_BUILD_TYPE=Debug
+```
 
 ## Compile
 

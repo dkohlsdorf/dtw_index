@@ -40,7 +40,7 @@ TimeSeriesIndex::~TimeSeriesIndex() {
   LOG(INFO) << "Deconstruct";
   delete_tree(root);  
   for(int i = 0; i < timeseries.size(); i++) {
-     delete timeseries[i];      
+    delete timeseries[i];      
   }
   for(int i = 0; i < buckets.size(); i++) {
     delete buckets[i];
@@ -108,7 +108,7 @@ int TimeSeriesIndex::reindex(int n_samples) {
     LOG(INFO) << "root not null";
     delete_tree(root);
     leaf_map.clear();
-    indexing_batch.clear();
+    indexing_batch.clear();   
   }
   LOG(INFO) << "Delete buckets";
   for(int i = 0; i < buckets.size(); i++) {

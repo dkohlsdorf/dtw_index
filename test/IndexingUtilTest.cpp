@@ -125,6 +125,9 @@ TEST(IndexingUtilsTest, euclidean) {
     float dist = tsidx::euclidean_at(batch[0], batch[1], i, i);
     ASSERT_EQ(dist, 18);
   }
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 TEST(IndexingUtilsTest, dtw) {
@@ -133,6 +136,9 @@ TEST(IndexingUtilsTest, dtw) {
   ASSERT_EQ(dtw(batch[0], batch[1], 1.0), 90);
   ASSERT_EQ(dtw(batch[0], batch[1], 0.5), 90);
   ASSERT_EQ(dtw(batch[0], batch[1], 0.1), 90);
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 
@@ -148,7 +154,10 @@ TEST(IndexingUtilsTest, select_rand) {
   for(int i = 0; i < 100; i++) {
     ASSERT_NE(select_rand(batch, rng, idx), 3);
     ASSERT_NE(select_rand(batch, rng, idx), 1);
-  }  
+  }
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 TEST(IndexingUtilsTest, select_far) {
@@ -171,6 +180,9 @@ TEST(IndexingUtilsTest, select_far) {
   ASSERT_GT(n3, n1);
   ASSERT_GT(n3, 0);
   ASSERT_GT(n1, 0);
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 
@@ -193,6 +205,9 @@ TEST(IndexingUtilsTest, partition) {
   for(int i = 0; i < 4; i++) {    
     ASSERT_EQ(idx[i], expected_idx[i]);
   }
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 TEST(IndexingUtilsTest, buildTree) {
@@ -202,6 +217,10 @@ TEST(IndexingUtilsTest, buildTree) {
   build_tree(batch, 10, 1.0, root);  
   int depth = max_depth(root, 0, " ");  
   ASSERT_TRUE(depth <= 10);  
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
+  delete_tree(root);
 }
 
 TEST(IndexingUtilsTest, searchTree) {  
@@ -241,6 +260,10 @@ TEST(IndexingUtilsTest, searchTree) {
   }
   LOG(INFO) << "Accuracy: " << acc << " = " << correct << "/" << n;
   ASSERT_GT(acc, 0.8);
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
+  delete_tree(root);
 }
 
 TEST(IndexingUtilsTest, deleteTree) {
@@ -249,7 +272,11 @@ TEST(IndexingUtilsTest, deleteTree) {
   tsidx::Node* root = new tsidx::Node();
   build_tree(batch, 10, 1.0, root);  
   int n = delete_tree(root);
+  // TODO could be uninitialized
   ASSERT_GE(n, 10);
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
 }
 
 TEST(IndexingUtilsTest, leafNodes) {
@@ -262,4 +289,8 @@ TEST(IndexingUtilsTest, leafNodes) {
   leaf_nodes(root, "", leafs);
   int n = leafs.size();
   ASSERT_GE(leafs.size(), 10);
+  for(int i = 0; i < batch.size(); i++) {
+    delete[] batch[i].x;
+  }
+  delete_tree(root);
 }

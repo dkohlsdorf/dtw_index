@@ -82,9 +82,10 @@ void parallelIndex(const std::vector<int> &op, int n_buckets, int n_threads) {
   }
   int round_robin = 0;
   for(int i = 0; i < op.size(); i++) {
+    // TODO could be uninitialized
     op_[round_robin].push_back(op[i]);
     round_robin++;
-    if(round_robin > op_.size()) {
+    if(round_robin >= op_.size()) {
       round_robin = 0;
     }
   }
@@ -114,6 +115,14 @@ void parallelIndex(const std::vector<int> &op, int n_buckets, int n_threads) {
   auto t2 = system_clock::now();
   duration<double, std::milli> ms_double = t2 - t1;
   LOG(INFO) << "Parallel time: " << ms_double.count() << " [ms]\n";
+
+  for(int i = 0; i < threads.size(); i++) {
+    delete threads[i];
+  }
+  
+  for(int i = 0 ; i < buckets.size(); i++) {
+    delete buckets[i];
+  }
 }
 
 void readFromIndexTest(tsidx::TimeSeriesBatch &data,
@@ -132,7 +141,14 @@ void readFromIndexTest(tsidx::TimeSeriesBatch &data,
       int status = idx.search_idx(data[i], result);
       int n_one = 0;
       for(const auto& label : result) {
-	if(labels[label] == 1) n_one++;
+	if(label >= labels.size() || label < 0) {
+	  LOG(ERROR) << "Label not found: " << label << " / " << labels.size();
+	}	   
+	else {
+	  // TODO could be uninitilized
+	  if(labels[label] == 1) n_one++;
+	}
+	
       }
       int expected = labels[i];
       if(expected == 1 && n_one > (result.size() - n_one)) correct++;
@@ -196,6 +212,12 @@ void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
 	    << ms_double.count() << " [ms] for "
 	    << n_threads << " thread";
   LOG(INFO) << "Accuracy: " << acc << " = " << total_correct << " / "  << total;
+  for(int i = 0; i < data.size(); i++) {
+    delete[] data[i].x;
+  }
+  for(int i = 0; i < threads.size(); i++) {
+    delete threads[i];
+  }
 }
 
 void experimentThreadSafetyBuild(int n_samples) {
@@ -225,6 +247,10 @@ void experimentThreadSafetyBuild(int n_samples) {
 
   ri.join();
   r.join();
+
+  for(int i = 0; i < data.size(); i++) {
+    delete[] data[i].x;
+  }
 }
 
 void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
@@ -286,6 +312,15 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
 	    << ms_double.count() << " [ms] for "
 	    << n_threads << " thread";
   LOG(INFO) << "Accuracy: " << acc << " = " << total_correct << " / "  << total;
+  for(int i = 0; i < data.size(); i++) {
+    delete[] data[i].x;
+  }
+  for(int i = 0; i < threads.size(); i++) {
+    delete threads[i];
+  }
+  for(int i = 0; i < threads_write.size(); i++) {
+    delete threads_write[i];
+  }    
 }
 
 int main(int argc, char **argv) { 

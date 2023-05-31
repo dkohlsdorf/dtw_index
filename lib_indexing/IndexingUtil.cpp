@@ -202,7 +202,8 @@ int search(const TimeSeries &ts, const TimeSeriesBatch& batch, Node *node, float
 }
 
 int delete_tree(Node *node) {
-  int l, r = 0;
+  int l = 0;
+  int r = 0;
   if(node -> left != NULL) {
     l = delete_tree(node -> left);
   }

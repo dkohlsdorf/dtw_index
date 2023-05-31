@@ -18,7 +18,7 @@ using the ./benchmark tool. I suggest to disable logging for actual measurments.
 I am also using this to test for memory leaks or parallelisation issues. Great bianry to run valgrind
 
 ```
-GLOG_log_dir=. valgrind -v --leak-check=full -- ./benchmark
+GLOG_log_dir=. valgrind -v --leak-check=full --log-file=vg_benchmark_20230601.log ./benchmark
 ``` 
 
 

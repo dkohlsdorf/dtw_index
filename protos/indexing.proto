@@ -1,7 +1,17 @@
-service TimeSeries {
-  rpc insert (TimeSeries) returns (int) {}
+syntax = "proto3";
+
+service TimeSeriesService {
+  rpc insert (TimeSeries) returns (ReindexingResponse) {}
   rpc query (TimeSeries) returns (TimeSeriesIdx) {}
-  rpc reindex () returns () {}
+  rpc reindex (ReindexingRequest) returns (ReindexingResponse) {}
+}
+
+message ReindexingResponse {
+  int32 status = 1;	
+}
+
+message ReindexingRequest {
+  int32 n_samples = 1;
 }
 
 message TimeSeries {

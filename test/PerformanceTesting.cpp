@@ -114,7 +114,7 @@ void parallelIndex(const std::vector<int> &op, int n_buckets, int n_threads) {
   }
   auto t2 = system_clock::now();
   duration<double, std::milli> ms_double = t2 - t1;
-  LOG(INFO) << "Parallel time: " << ms_double.count() << " [ms]\n";
+  LOG(WARNING) << "Parallel time: " << ms_double.count() << " [ms]\n";
 
   for(int i = 0; i < threads.size(); i++) {
     delete threads[i];
@@ -142,10 +142,9 @@ void readFromIndexTest(tsidx::TimeSeriesBatch &data,
       int n_one = 0;
       for(const auto& label : result) {
 	if(label >= labels.size() || label < 0) {
-	  LOG(ERROR) << "Label not found: " << label << " / " << labels.size();
+	  LOG(INFO) << "Label not found: " << label << " / " << labels.size();
 	}	   
 	else {
-	  // TODO could be uninitilized
 	  if(labels[label] == 1) n_one++;
 	}
 	
@@ -164,13 +163,13 @@ void readFromIndexTest(tsidx::TimeSeriesBatch &data,
 }
 
 void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 10, 0.1);
+  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
   
   LOG(INFO) << "Inserting sequences";
-  for(const auto& ts : data) {
+  for(auto& ts : data) {
     idx.insert(ts);
   }
   LOG(INFO) << "Reindexing start";
@@ -208,7 +207,7 @@ void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
   
   float acc = (float) total_correct / total;
   duration<double, std::milli> ms_double = t2 - t1;
-  LOG(INFO) << "Parallel time: "
+  LOG(WARNING) << "Parallel time: "
 	    << ms_double.count() << " [ms] for "
 	    << n_threads << " thread";
   LOG(INFO) << "Accuracy: " << acc << " = " << total_correct << " / "  << total;
@@ -221,13 +220,13 @@ void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
 }
 
 void experimentThreadSafetyBuild(int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 10, 0.1);
+  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
   
   LOG(INFO) << "Inserting sequences";
-  for(const auto& ts : data) {
+  for(auto& ts : data) {
     idx.insert(ts);
   }
   
@@ -254,11 +253,11 @@ void experimentThreadSafetyBuild(int n_samples) {
 }
 
 void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 10, 0.1);
+  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
-  for(const auto& ts : data) {
+  for(auto& ts : data) {
     idx.insert(ts);
   }
 
@@ -308,10 +307,10 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
   
   float acc = (float) total_correct / total;
   duration<double, std::milli> ms_double = t2 - t1;
-  LOG(INFO) << "Parallel time: "
+  LOG(WARNING) << "Parallel time: "
 	    << ms_double.count() << " [ms] for "
 	    << n_threads << " thread";
-  LOG(INFO) << "Accuracy: " << acc << " = " << total_correct << " / "  << total;
+  LOG(WARNING) << "Accuracy: " << acc << " = " << total_correct << " / "  << total;
   for(int i = 0; i < data.size(); i++) {
     delete[] data[i].x;
   }

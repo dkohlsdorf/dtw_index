@@ -2,10 +2,11 @@
 #include<vector>
 
 namespace tsidx {
-  struct TimeSeries {
+  struct TimeSeries {    
     float *x;
     int length;
     int dim;
+    int id;
   };
 
   struct BatchRange {

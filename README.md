@@ -18,12 +18,19 @@ using the ./benchmark tool. I suggest to disable logging for actual measurments.
 I am also using this to test for memory leaks or parallelisation issues. Great bianry to run valgrind
 
 ```
-GLOG_log_dir=. valgrind -v --leak-check=full --log-file=vg_benchmark_20230601.log ./benchmark
+valgrind -v --leak-check=full --show-leak-kinds=all --log-file=vg_benchmark_20230601.log ./benchmark
 ``` 
 
+```
+valgrind -tool=helgrind  --log-file=hg_benchmark_20230601_threads.log ./benchmark
+```
 
 ```
 cmake .. -D CMAKE_BUILD_TYPE=Debug
+```
+
+```
+GLOG_minlevel=1 GLOG_log_dir=. ./benchmark
 ```
 
 ## Compile

@@ -47,36 +47,34 @@ TimeSeriesIndex::~TimeSeriesIndex() {
   }
 }
   
-int TimeSeriesIndex::insert(const TimeSeries& ts) {
+int TimeSeriesIndex::insert(TimeSeries& ts) {
   if(status == IDX_RUN) {
     LOG(INFO) << "Currently Indexing, No insertion";
     return IDX_RUN;
   }
+  if(root == NULL && timeseries.size() == 0) {
+    std::unique_lock lock(mutex);
+    buckets.push_back(new tsidx::ThreadsafeCollection<int>());
+    timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
+  }
+  if(timeseries.back() -> size() >= ts_bucket_size) {
+    std::unique_lock lock(mutex);
+    timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
+  }
+  
   std::shared_lock lock(mutex);
-  LOG(INFO) << "Insert";
   if(root == NULL) {
-    if(timeseries.size() == 0) {
-      buckets.push_back(new tsidx::ThreadsafeCollection<int>());
-      timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
-    }
     int n = ts_bucket_size * (timeseries.size() - 1) + timeseries.back() -> size();
     buckets[0] -> insert(n);
-    if(timeseries.back() -> size() >= ts_bucket_size) {
-      timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
-    }
+    ts.id = n;
     timeseries.back() -> insert(ts);
-    LOG(INFO) << "INSERT: " << n << " into " << timeseries.size() - 1;
   } else {
     int node = search(ts, indexing_batch, root, band_percentage);      
     int bucket = leaf_map[node];
     int n = ts_bucket_size * (timeseries.size() - 1) + timeseries.back() -> size();
     buckets[bucket] -> insert(n);
-    if(timeseries.back() -> size() >= ts_bucket_size) {
-      timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
-    }
+    ts.id = n;
     timeseries.back() -> insert(ts);
-    LOG(INFO) << "INSERT: " << n << " into ts: "
-	      << timeseries.size() - 1 << " bucket: " << bucket;
   }
   return IDX_READY;  
 }
@@ -87,11 +85,8 @@ int TimeSeriesIndex::search_idx(const TimeSeries& ts, std::vector<int>& nearest)
     return IDX_RUN;
   }
   std::shared_lock lock(mutex);
-  LOG(INFO) << "Search";
-  LOG(INFO) << "\t root null " << (root == NULL);
   int node = search(ts, indexing_batch, root, band_percentage);
   int bucket = leaf_map[node];
-  LOG(INFO) << "Copy Nearest";
   for(const auto& i : buckets[bucket] -> get()) {
     nearest.push_back(i);
   }
@@ -129,7 +124,6 @@ int TimeSeriesIndex::reindex(int n_samples) {
     closed.insert(id);
     int bucket = i / ts_bucket_size;
     int bucket_i = i % ts_bucket_size;
-    LOG(INFO) << "\t bucket "  << bucket << " [" << bucket_i << "] = " << id ;
     indexing_batch.push_back(timeseries[bucket] -> get()[bucket_i]);
   }
 
@@ -143,7 +137,6 @@ int TimeSeriesIndex::reindex(int n_samples) {
   for(int i = 0; i < leafs.size(); i++) {
     buckets.push_back(new tsidx::ThreadsafeCollection<int>());
     leaf_map[leafs[i]] = i;
-    LOG(INFO) << "Map: " << leafs[i] << " : " << i << " " << leaf_map[leafs[i]];
   }
 
   // insert all
@@ -153,14 +146,12 @@ int TimeSeriesIndex::reindex(int n_samples) {
     for(const auto& ts : sequences) {
       int node = search(ts, indexing_batch, root, band_percentage);      
       int bucket = leaf_map[node];
-      LOG(INFO) << "\t INSERT: " << node << " " << bucket;
       buckets[bucket] -> insert(i);
       i++;
     }
   }
   i = 0;
   for(const auto& bucket : buckets) {
-    LOG(INFO) << "Bucket [" << i << "] = " << bucket -> size();
     i++;
   }
   status = IDX_READY;

@@ -36,6 +36,7 @@ void gunpoint(tsidx::TimeSeriesBatch& data, std::vector<int>& labels) {
       }
       i++;
     }
+    ts.id = -1;
     data.push_back(ts);
   }       
   data_file.close(); 
@@ -65,7 +66,7 @@ void sequentialIndex(const std::vector<int> &op, int n_buckets) {
   }  
   auto t2 = system_clock::now();
   duration<double, std::milli> ms_double = t2 - t1;
-  LOG(INFO) << "Sequential time: " << ms_double.count() << " [ms]\n";
+  LOG(WARNING) << "Sequential time: " << ms_double.count() << " [ms]\n";
 }
 
 void parallelIndex(const std::vector<int> &op, int n_buckets, int n_threads) {
@@ -135,35 +136,40 @@ void readFromIndexTest(tsidx::TimeSeriesBatch &data,
 		       int thread) {
 
     auto t1 = system_clock::now();
-    int correct = 0;  
+    int correct = 0;
+    int total_not_found = 0;
     for (int i = start; i < stop; i += 1) {
       std::vector<int> result;
       int status = idx.search_idx(data[i], result);
       int n_one = 0;
+      int not_found = 0;
       for(const auto& label : result) {
 	if(label >= labels.size() || label < 0) {
 	  LOG(INFO) << "Label not found: " << label << " / " << labels.size();
+	  not_found += 1;
 	}	   
 	else {
 	  if(labels[label] == 1) n_one++;
-	}
-	
+	}	
       }
-      int expected = labels[i];
-      if(expected == 1 && n_one > (result.size() - n_one)) correct++;
-      if(expected == 2 && n_one <= (result.size() - n_one)) correct++;
-      attempted[thread]++;
+      if(not_found <= result.size()) {
+	int expected = labels[data[i].id];
+	if(expected == 1 && n_one > (result.size() - n_one)) correct++;
+	if(expected == 2 && n_one <= (result.size() - n_one)) correct++;
+	attempted[thread]++;
+      }
+      total_not_found += not_found;
     }
     auto t2 = system_clock::now();
     duration<double, std::milli> ms_double = t2 - t1;
     float acc = (float) correct / (stop - start);
     LOG(INFO) << "\tThread time[" << start << "]: " << ms_double.count() << " [ms]\n";    
-    LOG(INFO) << "Accuracy: " << acc << " = " << correct << " / "  << stop - start;
+    LOG(INFO) << "Accuracy: " << acc << " = " << correct << " / "  << attempted[thread] << " " << total_not_found;
     correctness[thread] = correct;
 }
 
 void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
+  tsidx::TimeSeriesIndex idx(50, 1, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
@@ -220,7 +226,7 @@ void experimentGunpointSpeedParallelSearch(int n_threads, int n_samples) {
 }
 
 void experimentThreadSafetyBuild(int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
+  tsidx::TimeSeriesIndex idx(50, 1, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
@@ -253,14 +259,20 @@ void experimentThreadSafetyBuild(int n_samples) {
 }
 
 void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
-  tsidx::TimeSeriesIndex idx(1, 50, 0.1);
+  tsidx::TimeSeriesIndex idx(50, 1, 0.1);
   tsidx::TimeSeriesBatch data;
   std::vector<int> labels;  
   gunpoint(data, labels);
+
+  std::vector<int> remapped(labels.size());
+  int i = 0;
   for(auto& ts : data) {
     idx.insert(ts);
+    remapped[ts.id] = labels[i];
+    i += 1;
   }
-
+  labels = remapped;
+  
   idx.reindex(n_samples);
   std::vector<int> correctness(n_threads + 1);
   std::vector<int> attempted(n_threads + 1);
@@ -270,7 +282,6 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
   };
   auto write = [&data, &idx](int start, int stop) {
     for(int i = start; i < stop; i++) {
-      std::vector<int> result;
       int status = idx.insert(data[i]);
       if(status == 1) LOG(INFO) << "Status RUN";
     }    
@@ -324,8 +335,8 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
 
 int main(int argc, char **argv) { 
   // Test threads and such
-  experimentThreadSafetyBuild(100); 
-  experimentThreadSafetyReadWrite(100, 75); 
+  experimentThreadSafetyBuild(40); 
+  experimentThreadSafetyReadWrite(40, 75); 
   experimentThreadSafetyReadWrite(10, 75); 
   experimentThreadSafetyReadWrite(1, 75);
   // Index constructed and Parallel Search Test

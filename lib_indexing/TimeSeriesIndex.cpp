@@ -25,13 +25,19 @@ int ThreadsafeCollection<T>::size() {
 }
 
  
-TimeSeriesIndex::TimeSeriesIndex(int bucket_size,
-				 int ts_bucket_size,
+TimeSeriesIndex::TimeSeriesIndex(int n_buckets,
+				 int bucket_size,
 				 float band_percentage) {
-  this -> bucket_size = bucket_size;
+  for(int i = 0; i < n_buckets; i++) {
+    timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
+  }
+  buckets.push_back(new tsidx::ThreadsafeCollection<int>());
+
+  this -> n_buckets = n_buckets;
   this -> band_percentage = band_percentage;
-  this -> ts_bucket_size = ts_bucket_size;  
+  this -> bucket_size = bucket_size;  
   status = IDX_READY;
+  n = 0;
   root = NULL;
 }
     
@@ -52,30 +58,20 @@ int TimeSeriesIndex::insert(TimeSeries& ts) {
     LOG(INFO) << "Currently Indexing, No insertion";
     return IDX_RUN;
   }
-  if(root == NULL && timeseries.size() == 0) {
-    std::unique_lock lock(mutex);
-    buckets.push_back(new tsidx::ThreadsafeCollection<int>());
-    timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
-  }
-  if(timeseries.back() -> size() >= ts_bucket_size) {
-    std::unique_lock lock(mutex);
-    timeseries.push_back(new tsidx::ThreadsafeCollection<TimeSeries>());
-  }
   
   std::shared_lock lock(mutex);
-  if(root == NULL) {
-    int n = ts_bucket_size * (timeseries.size() - 1) + timeseries.back() -> size();
-    buckets[0] -> insert(n);
+  if(ts.id < 0) {
     ts.id = n;
-    timeseries.back() -> insert(ts);
+  }
+  timeseries[n % n_buckets] -> insert(ts);
+  if(root == NULL) {
+    buckets[0] -> insert(ts.id);
   } else {
     int node = search(ts, indexing_batch, root, band_percentage);      
     int bucket = leaf_map[node];
-    int n = ts_bucket_size * (timeseries.size() - 1) + timeseries.back() -> size();
-    buckets[bucket] -> insert(n);
-    ts.id = n;
-    timeseries.back() -> insert(ts);
+    buckets[bucket] -> insert(ts.id);
   }
+  n++;
   return IDX_READY;  
 }
 
@@ -111,20 +107,20 @@ int TimeSeriesIndex::reindex(int n_samples) {
   }
   buckets.clear();
 
-  LOG(INFO) << "#ts_buckets: " << timeseries.size();
-  int n = ts_bucket_size * (timeseries.size() - 1) + timeseries.back() -> size();
-  
+  LOG(INFO) << "#ts_buckets: " << timeseries.size();  
   LOG(INFO) << "Find Samples: " << n_samples << " / " << n;
   std::set<int> closed;
   for(int i = 0; i < n_samples; i++) {
-    int id = rand() % n;
+    int bucket_id = rand() % n_buckets;
+    int ts_i = rand() % timeseries[bucket_id] -> size();
+    int id = timeseries[bucket_id] -> get()[ts_i].id; 
     while(closed.find(id) != closed.end()) {
-      id = rand() % n;
+      bucket_id = rand() % n_buckets;
+      ts_i = rand() % timeseries[bucket_id] -> size();
+      id = timeseries[bucket_id] -> get()[ts_i].id; 
     }
     closed.insert(id);
-    int bucket = i / ts_bucket_size;
-    int bucket_i = i % ts_bucket_size;
-    indexing_batch.push_back(timeseries[bucket] -> get()[bucket_i]);
+    indexing_batch.push_back(timeseries[bucket_id] -> get()[ts_i]);
   }
 
   LOG(INFO) << "Build Tree: bucket = " << bucket_size << " batch = " << indexing_batch.size();
@@ -140,19 +136,13 @@ int TimeSeriesIndex::reindex(int n_samples) {
   }
 
   // insert all
-  int i = 0;
   for(const auto& bucket : timeseries) {
     TimeSeriesBatch sequences = bucket -> get();
     for(const auto& ts : sequences) {
       int node = search(ts, indexing_batch, root, band_percentage);      
       int bucket = leaf_map[node];
-      buckets[bucket] -> insert(i);
-      i++;
+      buckets[bucket] -> insert(ts.id);
     }
-  }
-  i = 0;
-  for(const auto& bucket : buckets) {
-    i++;
   }
   status = IDX_READY;
   return IDX_READY;

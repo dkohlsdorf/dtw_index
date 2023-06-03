@@ -4,6 +4,7 @@
 #include <mutex>
 #include <vector>
 #include <map>
+#include <atomic>
 
 namespace tsidx {
   /**
@@ -32,25 +33,27 @@ namespace tsidx {
 
   class TimeSeriesIndex {
   public:
-    TimeSeriesIndex(int bucket_size, int ts_bucket_size,
+    TimeSeriesIndex(int n_buckets, int bucket_size,
 		    float band_percentage);
     ~TimeSeriesIndex();
     int insert(TimeSeries& ts);
     int search_idx(const TimeSeries& ts, std::vector<int> &nearest);
     int reindex(int n_samples);
   private:
+    int n_buckets;
     int bucket_size;
-    int ts_bucket_size;
     float band_percentage;
     
     Node *root;
     TimeSeriesBatch indexing_batch;
     std::map<int, int> leaf_map;
     
-    int status;
+    std::atomic_int status;
     mutable std::shared_mutex mutex;
 
+    std::atomic_int n;
     std::vector<ThreadsafeCollection<TimeSeries>*> timeseries;   
-    std::vector<ThreadsafeCollection<int>*> buckets;  
+    std::vector<ThreadsafeCollection<int>*> buckets;
+    
   };
 }

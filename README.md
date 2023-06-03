@@ -22,7 +22,7 @@ valgrind -v --leak-check=full --show-leak-kinds=all --log-file=vg_benchmark_2023
 ``` 
 
 ```
-valgrind -tool=helgrind  --log-file=hg_benchmark_20230601_threads.log ./benchmark
+valgrind --tool=helgrind  --log-file=hg_benchmark_20230601_threads.log ./benchmark
 ```
 
 ```
@@ -30,7 +30,7 @@ cmake .. -D CMAKE_BUILD_TYPE=Debug
 ```
 
 ```
-GLOG_minlevel=1 GLOG_log_dir=. ./benchmark
+GLOG_minloglevel=1 GLOG_log_dir=. ./benchmark
 ```
 
 ## Compile

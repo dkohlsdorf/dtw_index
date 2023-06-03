@@ -305,9 +305,6 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
   int total_correct = 0;
   int total = 0;
   for(int i = 0; i < n_threads + 1; i++) {
-    if(i < threads_write.size()) {      
-      threads_write[i] -> join();
-    }
     if(i < threads.size()) {
       threads[i] -> join();
       total_correct += correctness[i];
@@ -315,7 +312,9 @@ void experimentThreadSafetyReadWrite(int n_threads, int n_samples) {
     }
   }
   auto t2 = system_clock::now();
-  
+  for(int i = 0; i < n_threads; i++) {
+    threads_write[i] -> join();
+  }
   float acc = (float) total_correct / total;
   duration<double, std::milli> ms_double = t2 - t1;
   LOG(WARNING) << "Parallel time: "

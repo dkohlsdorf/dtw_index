@@ -138,8 +138,7 @@ void build_tree(const TimeSeriesBatch& batch, int bucket_size, float band_percen
     TreeBuilderState state = work.back();
     work.pop_back();
     int length = state.range.stop - state.range.start;
-    
-    if(length > bucket_size) {
+    if(length > bucket_size) {          
       LOG(INFO) << "#work: " << work.size() << " "
 		<< "node_id: " << state.current_node -> node_id << " "
 		<< "length: " << length << " "
@@ -152,8 +151,14 @@ void build_tree(const TimeSeriesBatch& batch, int bucket_size, float band_percen
       
       state.current_node -> left_ts = left;
       state.current_node -> right_ts = right;
+
       state.current_node -> left = new tsidx::Node();
       state.current_node -> right = new tsidx::Node();
+      state.current_node -> left -> left   = NULL;
+      state.current_node -> left -> right  = NULL;
+      state.current_node -> right -> left  = NULL;
+      state.current_node -> right -> right = NULL;
+
       
       right_state.current_node = state.current_node -> right;
       left_state.current_node = state.current_node -> left;

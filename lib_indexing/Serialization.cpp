@@ -37,10 +37,15 @@ namespace tsidx {
     // id, left_ts_id, right_ts_id, left_node_id, right_node_id, span
     int node_sze = sizeof(int) * 6;
     // nodes * nodesize + n_nodes
-    int nodes_sze = (node_sze * n_nodes) + sizeof(int);
-    // leaf_node_id, n_ids, id1...idm, n_buckets
-    int leaf_sze = sizeof(int) * (2 * n_buckets + n_ids) + sizeof(int);    
-    return node_sze + nodes_sze + leaf_sze;
+    int nodes_sze = (node_sze * n_nodes) + sizeof(size_t);
+
+    // leaf bucket n_ids
+    int header = sizeof(int) + sizeof(int) + sizeof(size_t);    
+    // n_buckets + [header1 ... headern] + [id1 ... idn]
+    int leaf_sze = sizeof(size_t)
+      + header * n_buckets
+      + n_ids * sizeof(int);
+    return nodes_sze + leaf_sze;
   }
   
   int serialize_ts(int start,
@@ -135,11 +140,12 @@ namespace tsidx {
 
     start = write(start, buckets.size(), buffer);
     for(const auto &[leaf, i] : leaf_map) {
-      int sze = buckets[i].size();
+      size_t sze = buckets[i].size();
       start = write(start, leaf, buffer);
+      start = write(start, i, buffer);
       start = write(start, sze, buffer);
       for(const auto &ts_id : buckets[i]) {
-	start = write(start, i, buffer);
+	start = write(start, ts_id, buffer);
       } 
     }
   }
@@ -187,6 +193,30 @@ namespace tsidx {
     root -> span     = nodes[0] -> span;
     root -> left     = nodes[0] -> left;
     root -> right    = nodes[0] -> right;
+
+    size_t n_buckets;
+    start = read(start, buffer, n_buckets);
+    LOG(INFO) << "... reading n_buckets " << n_buckets;
+    for(int i = 0; i < n_buckets; i++) {
+      std::vector<int> bucket;
+      buckets.push_back(bucket);
+    }
+    for(int i = 0; i < n_buckets; i++) {
+      int leaf, bucket;
+      size_t sze;
+      start = read(start, buffer, leaf);
+      start = read(start, buffer, bucket);
+      start = read(start, buffer, sze);
+      LOG(INFO) << "... reading bucket "
+		<< leaf << " : " << bucket << " "
+		<< sze << "<<";
+      leaf_map[leaf] = bucket;
+      for(int j = 0; j < sze; j++) {
+	int id;
+	start = read(start, buffer, id);
+	buckets[bucket].push_back(id);
+      }
+    }
   }
 
 }

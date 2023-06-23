@@ -119,21 +119,43 @@ TEST(SerializationTest, de_serialize_tree) {
   tsidx::Node *node2 = new tsidx::Node; 
 
   // TODO: Test this
-  const std::map<int, int> leaf_map;
-  const std::vector<std::vector<int>> buckets;
+  std::map<int, int> leaf_map {
+    {1, 0},
+    {3, 1}
+  };
+  std::vector<std::vector<int>> buckets;
+  buckets.push_back({1,2,3});
+  buckets.push_back({4,5,6,7});
+
   std::map<int, int> leaf_map2;
   std::vector<std::vector<int>> buckets2;
   
   tree(node);
   ASSERT_FALSE(node == NULL);
 
-  int n = tsidx::n_bytes(4, 0, 0);
+  int n = tsidx::n_bytes(4, 2, 7);
+  LOG(INFO) << "n_bytes: " << n; 
   unsigned char* buffer = new unsigned char[n];
   
   serialize_tree(node, leaf_map, buckets, buffer);
   deserialize_tree(node2, leaf_map2, buckets2, buffer);
   ASSERT_TRUE(compare_tree(node, node2));
 
+  for(const auto &[leaf, i] : leaf_map) {
+    ASSERT_EQ(leaf_map2[leaf], i);
+  }
+
+  for(int i = 0; i < buckets.size(); i++) {
+    std::vector<int> b1 = buckets[i];
+    std::vector<int> b2 = buckets2[i];
+    for(int j = 0; j < buckets[i].size(); j++) {
+      int x = b1[j];
+      int y = b2[j];      
+      LOG(INFO) << x << " " << y;
+      //ASSERT_EQ(x, y);
+    }
+  }
+  
   tsidx::delete_tree(node);
   tsidx::delete_tree(node2);
 }

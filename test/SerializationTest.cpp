@@ -152,7 +152,7 @@ TEST(SerializationTest, de_serialize_tree) {
       int x = b1[j];
       int y = b2[j];      
       LOG(INFO) << x << " " << y;
-      //ASSERT_EQ(x, y);
+      ASSERT_EQ(x, y);
     }
   }
   

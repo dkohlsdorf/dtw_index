@@ -134,6 +134,6 @@ TEST(SerializationTest, de_serialize_tree) {
   deserialize_tree(node2, leaf_map2, buckets2, buffer);
   ASSERT_TRUE(compare_tree(node, node2));
 
-  //tsidx::delete_tree(node);
-  //tsidx::delete_tree(node2);
+  tsidx::delete_tree(node);
+  tsidx::delete_tree(node2);
 }

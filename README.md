@@ -4,6 +4,24 @@ Builds a time series index by recursively partitioning the dataset
 by picking two far away candidates and grouping all sequences around those.
 The distance is measured using the dynamic time warping.
 
+## Structure
+
++ data/: some test data
++ protos/: server interface defined by google remote procedure calls
++ scripts/: some scripts that help with the repository
++ test/: implements unit tests as well as integration tests
++ libindexing/: this is where the algorithm and main code lives
++ server/: implements the actual C++ database as a grpc server
+
+## Server
+First we need to run the script that generating the remote procedure call interface. We can simply run:
+
+```
+scripts/generate_proto.sh
+```
+
+which generates the interfaces for python and c++ as defined in the protobuf definition in protos/.
+
 ## Testing
 ### Unitttests
 I tested the base functions in IndexingUtil with unit tests
@@ -46,3 +64,4 @@ $ make test
 + [1] gtest
 + [2] glog
 + [3] gflags
++ [4] grpc

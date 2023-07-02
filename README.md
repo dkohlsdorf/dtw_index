@@ -23,6 +23,15 @@ scripts/generate_proto.sh
 which generates the interfaces for python and c++ as defined in the protobuf definition in protos/.
 
 ## Testing
+
+### Server Testing
+If you want to test the server implementation go into the scripts folder and run:
+
+```
+$ cd scripts
+$ python replay_keogh.py
+```
+
 ### Unitttests
 I tested the base functions in IndexingUtil with unit tests
 this includes mainly the tree construction and dtw code. Some

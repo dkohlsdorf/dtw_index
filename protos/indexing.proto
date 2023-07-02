@@ -7,7 +7,8 @@ service TimeSeriesService {
 }
 
 message ReindexingResponse {
-  int32 status = 1;	
+  int32 status = 1;
+  int32 ts_id = 2;
 }
 
 message ReindexingRequest {
@@ -22,5 +23,5 @@ message TimeSeries {
 
 message TimeSeriesIdx {
   repeated int32 ids = 1;
-  string messages = 2;
+  int32 status = 2;
 }

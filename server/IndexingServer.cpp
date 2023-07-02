@@ -37,47 +37,59 @@ class TimeSeriesServer final : public TimeSeriesService::Service {
 
 public:
   TimeSeriesServer(int n_buckets, int bucket_size, float band_percentage) {
-    idx = new tsidx::TimeSeriesIndex(n_buckets, bucket_size,
+    idx_ = new tsidx::TimeSeriesIndex(n_buckets, bucket_size,
 				     band_percentage);
 
   }
 
   ~TimeSeriesServer() {
-    delete idx;
+    delete idx_;
   }
   
   Status insert(ServerContext *context,
 		const TimeSeries *ts,
 		ReindexingResponse* response) override {
-    tsidx::TimeSeries timeseries;
     LOG(INFO) << "INSERT SERVER sequence of length=" << ts->length()
 	      << " and dim=" << ts->dim()
 	      << " preview=" << ts->ts(0) << ","
       	      << " preview=" << ts->ts(1) << ","
       	      << " preview=" << ts->ts(2) << ","
-      	      << " preview=" << ts->ts(3);
-
+      	      << " preview=" << ts->ts(3); 
+    tsidx::TimeSeries timeseries;   
     copy(ts, timeseries);
-    idx -> insert(timeseries);    
+    int status = idx_ -> insert(timeseries);    
+    response -> set_status(status);
+    response -> set_ts_id(timeseries.id);
     return Status::OK;
   }
   
   Status query(ServerContext *context,
 	       const TimeSeries *ts,
 	       TimeSeriesIdx *idx) override {
-    // TODO stub
+    tsidx::TimeSeries timeseries;   
+    copy(ts, timeseries);
+  
+    std::vector<int> nearest;
+    int status = idx_ -> search_idx(timeseries, nearest);
+    idx -> set_status(status);
+    for(const auto& nn : nearest) {
+      idx -> add_ids(nn);
+    }
     return Status::OK;
   }
   
   Status reindex(ServerContext *context,
 		 const ReindexingRequest* request,
 		 ReindexingResponse* response) override {
-    // TODO stub
+    // TODO make this asynch
+    int status = idx_ -> reindex(request -> n_samples());
+    response -> set_status(status);
+    response -> set_ts_id(-1);
     return Status::OK;
   }
 
 private:
-  tsidx::TimeSeriesIndex *idx;
+  tsidx::TimeSeriesIndex *idx_;
   
 };
 

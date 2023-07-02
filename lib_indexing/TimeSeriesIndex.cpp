@@ -89,7 +89,7 @@ int TimeSeriesIndex::search_idx(const TimeSeries& ts, std::vector<int>& nearest)
   return status;
 }
  
-int TimeSeriesIndex::reindex(int n_samples) {
+int TimeSeriesIndex::reindex(int n_samples) {  
   std::unique_lock lock(mutex);                                                               
   LOG(INFO) << "Reindex";
   status = IDX_RUN;  

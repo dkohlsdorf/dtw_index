@@ -38,7 +38,7 @@ def run():
         print(f"Query Response: status = {response.status}")
         for neighbor in response.ids:
             print(f"\t ... neighbor: {neighbor}")
-
+        response = stub.save(indexing_pb2.SaveIndexRequest(name = "test_save"))
         
 if __name__ == "__main__":
     run()

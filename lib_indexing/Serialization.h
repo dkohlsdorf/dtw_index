@@ -7,7 +7,7 @@ namespace tsidx {
 
   int n_bytes(const TimeSeries& ts);
 
-  int n_bytes(int n_nodes, int n_timeseries, int n_ids);
+  int n_bytes(int n_nodes, int n_buckets, int n_ids);
   
   int serialize_ts(int start, const TimeSeries& ts, unsigned char* buffer);
 

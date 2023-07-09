@@ -8,6 +8,8 @@
 
 #include "IndexingTypes.h"
 #include "TimeSeriesIndex.h"
+#include "Serialization.h"
+
 #include "gen/indexing.grpc.pb.h"
 
 
@@ -88,6 +90,14 @@ public:
     return Status::OK;
   }
 
+  Status save(ServerContext *context,
+	      const SaveIndexRequest *request,
+	      SaveIndexResponse *response) override {
+    idx_ -> save(request -> name());
+    response -> set_response(0);
+    return Status::OK;
+  }
+  
 private:
   tsidx::TimeSeriesIndex *idx_;
   

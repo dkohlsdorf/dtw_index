@@ -1,8 +1,15 @@
 #include "TimeSeriesIndex.h"
 #include "IndexingUtil.h"
+#include "Serialization.h"
+
 #include <glog/logging.h>
 #include <cmath>
 #include <set>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sstream>
+#include <fstream>
 
 namespace tsidx {
 
@@ -148,6 +155,79 @@ int TimeSeriesIndex::reindex(int n_samples) {
   return IDX_READY;
 }
 
+int TimeSeriesIndex::save(std::string name) {
+  std::unique_lock lock(mutex);
+
+  std::stringstream ss;
+  ss << "./" << name;
+  int status;
+  status = mkdir(ss.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+  LOG(INFO) << "Save index to folder: " << name << ": " << status;
+
+  status = IDX_RUN;  
+  // write out all time series
+  for(int i = 0; i < timeseries.size(); i++) {
+    int batch_size = 0;
+    std::vector<TimeSeries> batch = timeseries[i] -> get();
+    for(const auto& ts : batch) {
+      batch_size += n_bytes(ts);
+    }
+    unsigned char *buf = new unsigned char[batch_size];
+    int start = 0;
+    for(const auto& ts : batch) {
+      start = serialize_ts(start, ts, buf);
+    }
+    std::stringstream ss_name;
+    ss_name << "./" << name << "/ts_bucket" << i << ".bin";    
+    LOG(INFO) << ss_name.str();
+    std::fstream file_ts;
+    file_ts.open(ss_name.str(), std::fstream::out | std::fstream::binary);
+    file_ts.write(reinterpret_cast<char const*>(buf), batch_size);
+    file_ts.close();
+    delete buf;
+  }
+  
+  // write out indexing batch 
+  int batch_size = 0;
+  for(const auto& ts : indexing_batch) {
+    batch_size += n_bytes(ts);
+  }
+  unsigned char *buf = new unsigned char[batch_size];
+  int start = 0;
+  for(const auto& ts : indexing_batch) {
+    start = serialize_ts(start, ts, buf);
+  }
+  std::stringstream ss_name;
+  ss_name << "./" << name << "/ts_bucket_idx.bin";    
+  LOG(INFO) << ss_name.str();
+  std::fstream file_ts;
+  file_ts.open(ss_name.str(), std::fstream::out | std::fstream::binary);
+  file_ts.write(reinterpret_cast<char const*>(buf), batch_size);
+  file_ts.close();
+  delete buf;
+
+  // write out tree
+  int n_nodes = tsidx::n_nodes(root);
+  batch_size = n_bytes(n_nodes, buckets.size(), n);
+  buf = new unsigned char[batch_size];
+  std::vector<std::vector<int>> bucks;
+  for(int i = 0; i < buckets.size(); i++) {
+    bucks.push_back(buckets[i] -> get());
+  }
+  std::stringstream ss_name_idx;
+  ss_name_idx << "./" << name << "/idx.bin";    
+  LOG(INFO) << ss_name_idx.str();
+  serialize_tree(root, leaf_map, bucks, buf);
+  std::fstream file_idx;
+  file_idx.open(ss_name_idx.str(),  std::fstream::out | std::fstream::binary);
+  file_idx.write(reinterpret_cast<char const*>(buf), batch_size);
+  file_idx.close();
+  delete buf;
+  status = IDX_READY;
+  return 0;
+}
+  
 template class ThreadsafeCollection<int>;
 template class ThreadsafeCollection<TimeSeries>;
   

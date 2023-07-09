@@ -4,7 +4,17 @@ service TimeSeriesService {
   rpc insert (TimeSeries) returns (ReindexingResponse) {}
   rpc query (TimeSeries) returns (TimeSeriesIdx) {}
   rpc reindex (ReindexingRequest) returns (ReindexingResponse) {}
+  rpc save(SaveIndexRequest) returns (SaveIndexResponse) {}
 }
+
+message SaveIndexRequest {
+  string name = 1;
+}
+
+message SaveIndexResponse {
+  int32 response = 1;
+}
+
 
 message ReindexingResponse {
   int32 status = 1;

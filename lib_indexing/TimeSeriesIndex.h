@@ -32,13 +32,14 @@ namespace tsidx {
   };
 
   class TimeSeriesIndex {
-  public:
+  public:   
     TimeSeriesIndex(int n_buckets, int bucket_size,
 		    float band_percentage);
     ~TimeSeriesIndex();
     int insert(TimeSeries& ts);
     int search_idx(const TimeSeries& ts, std::vector<int> &nearest);
     int reindex(int n_samples);
+    int save(std::string name);    
   private:
     int n_buckets;
     int bucket_size;

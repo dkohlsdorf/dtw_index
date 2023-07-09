@@ -76,4 +76,9 @@ namespace tsidx {
    * All leaf node ids in a tree
    */ 
   void leaf_nodes(Node *node, std::string offset, std::vector<int> &leafs);
+
+  /**
+   * Number of nodes
+   */
+  int n_nodes(const Node *node);
 }

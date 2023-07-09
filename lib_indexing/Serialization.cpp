@@ -41,6 +41,7 @@ namespace tsidx {
 
     // leaf bucket n_ids
     int header = sizeof(int) + sizeof(int) + sizeof(size_t);    
+
     // n_buckets + [header1 ... headern] + [id1 ... idn]
     int leaf_sze = sizeof(size_t)
       + header * n_buckets

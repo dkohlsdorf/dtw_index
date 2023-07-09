@@ -233,5 +233,12 @@ void leaf_nodes(Node *node, std::string offset, std::vector<int> &leafs) {
     leaf_nodes(node -> right, offset + "\t", leafs);
   }  
 }
+
+int n_nodes(const Node *node) {
+  if(node == NULL) {
+    return 0;
+  }
+  return 1 + n_nodes(node -> left) + n_nodes(node -> right);
+}
   
 }

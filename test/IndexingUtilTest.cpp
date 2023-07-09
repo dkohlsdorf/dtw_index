@@ -294,3 +294,12 @@ TEST(IndexingUtilsTest, leafNodes) {
   }
   delete_tree(root);
 }
+
+TEST(IndexingUtilsTest, nNodes) {
+  tsidx::TimeSeriesBatch batch;
+  randomData(batch, 100);
+  tsidx::Node* root = new tsidx::Node();
+  build_tree(batch, 10, 1.0, root);  
+
+  ASSERT_GE(n_nodes(root), 25);
+}

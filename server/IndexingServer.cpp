@@ -41,10 +41,10 @@ public:
   TimeSeriesServer(int n_buckets, int bucket_size, float band_percentage) {
     idx_ = new tsidx::TimeSeriesIndex(n_buckets, bucket_size,
 				     band_percentage);
-
   }
-
+  
   ~TimeSeriesServer() {
+    
     delete idx_;
   }
   
@@ -97,6 +97,24 @@ public:
     response -> set_response(0);
     return Status::OK;
   }
+
+  Status load(ServerContext *context,
+	      const LoadIndexRequest *request,
+	      LoadIndexResponse *response) override {
+
+    int n_buckets = idx_ -> n_buckets;
+    int bucket_size = idx_ -> bucket_size;
+    float band_percentage = idx_ -> band_percentage;
+    delete idx_;
+    idx_ = new tsidx::TimeSeriesIndex(request -> name(),
+				      n_buckets,
+				      bucket_size,
+				      band_percentage);
+    response -> set_response(0);
+    return Status::OK;
+  }
+  
+  
   
 private:
   tsidx::TimeSeriesIndex *idx_;

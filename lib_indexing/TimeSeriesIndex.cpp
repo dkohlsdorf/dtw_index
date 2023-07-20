@@ -31,7 +31,10 @@ int ThreadsafeCollection<T>::size() {
   return collection.size();
 }
 
- 
+
+const char* IDX_BIN = "/idx.bin";
+const char* IDX_TS = "/ts_bucket_idx.bin";
+
 TimeSeriesIndex::TimeSeriesIndex(int n_buckets,
 				 int bucket_size,
 				 float band_percentage) {
@@ -47,7 +50,72 @@ TimeSeriesIndex::TimeSeriesIndex(int n_buckets,
   n = 0;
   root = NULL;
 }
+
+TimeSeriesIndex::TimeSeriesIndex(std::string name,
+				 int n_buckets,
+				 int bucket_size,
+				 float band_percentage) {
+  int i = 0;
+  while(true) {
+    std::stringstream ss_name;
+    ss_name << "./" << name << "/ts_bucket" << i << ".bin";    
+
+    std::ifstream file_ts;
+    file_ts.open(ss_name.str(), std::fstream::binary);
     
+    if(!file_ts.good()) break;
+    ThreadsafeCollection<TimeSeries> *collection = new ThreadsafeCollection<TimeSeries>();
+    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file_ts), {});
+    int len = buffer.size();
+    int start = 0;
+    while(start < len) {
+      TimeSeries ts;
+      start = deserialize_ts(start, ts, buffer.data());
+      collection -> insert(ts);
+    }
+    timeseries.push_back(collection);
+    i++;
+  }
+  
+  std::stringstream ss_name_idx;
+  ss_name_idx << "./" << name << IDX_BIN;
+  std::ifstream file_idx;
+  file_idx.open(ss_name_idx.str(), std::fstream::binary);
+  std::vector<unsigned char> buffer_idx(std::istreambuf_iterator<char>(file_idx), {});
+
+  std::vector<std::vector<int>> bb;
+  deserialize_tree(root, leaf_map, bb, buffer_idx.data());
+  
+  for(const auto& b : bb) {
+    ThreadsafeCollection<int> *collection = new ThreadsafeCollection<int>();
+    for(const auto id : b) {
+      collection -> insert(id);
+    }
+    buckets.push_back(collection);
+  }
+  
+  std::stringstream ss_name;
+  ss_name << "./" << name << IDX_TS;    
+  std::ifstream file_ts;
+  file_ts.open(ss_name.str(), std::fstream::binary);
+  std::vector<unsigned char> buffer_ts(std::istreambuf_iterator<char>(file_ts), {});
+  int len = buffer_ts.size();
+  int start = 0;
+  while(start < len) {
+    TimeSeries ts;
+    start = deserialize_ts(start, ts, buffer_ts.data());
+    indexing_batch.push_back(ts);
+  }
+
+
+  this -> n_buckets = n_buckets;
+  this -> band_percentage = band_percentage;
+  this -> bucket_size = bucket_size;  
+
+  status = IDX_READY;
+  n = i;
+}
+  
 TimeSeriesIndex::~TimeSeriesIndex() {
   std::unique_lock lock(mutex);
   LOG(INFO) << "Deconstruct";
@@ -199,7 +267,7 @@ int TimeSeriesIndex::save(std::string name) {
     start = serialize_ts(start, ts, buf);
   }
   std::stringstream ss_name;
-  ss_name << "./" << name << "/ts_bucket_idx.bin";    
+  ss_name << "./" << name << IDX_TS;    
   LOG(INFO) << ss_name.str();
   std::fstream file_ts;
   file_ts.open(ss_name.str(), std::fstream::out | std::fstream::binary);
@@ -216,7 +284,8 @@ int TimeSeriesIndex::save(std::string name) {
     bucks.push_back(buckets[i] -> get());
   }
   std::stringstream ss_name_idx;
-  ss_name_idx << "./" << name << "/idx.bin";    
+  ss_name_idx << "./" << name << IDX_BIN;
+  
   LOG(INFO) << ss_name_idx.str();
   serialize_tree(root, leaf_map, bucks, buf);
   std::fstream file_idx;

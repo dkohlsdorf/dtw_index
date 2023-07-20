@@ -5,6 +5,7 @@ service TimeSeriesService {
   rpc query (TimeSeries) returns (TimeSeriesIdx) {}
   rpc reindex (ReindexingRequest) returns (ReindexingResponse) {}
   rpc save(SaveIndexRequest) returns (SaveIndexResponse) {}
+  rpc load(LoadIndexRequest) returns (LoadIndexResponse) {}
 }
 
 message SaveIndexRequest {
@@ -15,6 +16,13 @@ message SaveIndexResponse {
   int32 response = 1;
 }
 
+message LoadIndexRequest {
+  string name = 1;
+}
+
+message LoadIndexResponse {
+  int32 response = 1;
+}
 
 message ReindexingResponse {
   int32 status = 1;

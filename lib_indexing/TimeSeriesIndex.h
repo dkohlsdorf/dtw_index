@@ -35,16 +35,18 @@ namespace tsidx {
   public:   
     TimeSeriesIndex(int n_buckets, int bucket_size,
 		    float band_percentage);
+    TimeSeriesIndex(std::string name, int n_buckets, int bucket_size,
+		    float band_percentage);
     ~TimeSeriesIndex();
     int insert(TimeSeries& ts);
     int search_idx(const TimeSeries& ts, std::vector<int> &nearest);
     int reindex(int n_samples);
     int save(std::string name);    
-  private:
+
     int n_buckets;
     int bucket_size;
     float band_percentage;
-    
+  private:    
     Node *root;
     TimeSeriesBatch indexing_batch;
     std::map<int, int> leaf_map;
@@ -54,7 +56,6 @@ namespace tsidx {
 
     std::atomic_int n;
     std::vector<ThreadsafeCollection<TimeSeries>*> timeseries;   
-    std::vector<ThreadsafeCollection<int>*> buckets;
-    
+    std::vector<ThreadsafeCollection<int>*> buckets;    
   };
 }

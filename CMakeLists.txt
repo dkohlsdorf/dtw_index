@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.22)
 
 project(TimeSeriesDB
     VERSION 1.0
@@ -21,10 +21,14 @@ FetchContent_MakeAvailable(googletest)
 FetchContent_Declare(
   gRPC
   GIT_REPOSITORY https://github.com/grpc/grpc
-  GIT_TAG        v1.28.0
-  )
+  GIT_TAG        v1.56.0
+)
 set(FETCHCONTENT_QUIET OFF)
+set(ABSL_ENABLE_INSTALL ON) 
 FetchContent_MakeAvailable(gRPC)
+
+#find_package(protobuf REQUIRED)
+#find_package(gRPC REQUIRED)
 
 find_package(glog  REQUIRED)
 

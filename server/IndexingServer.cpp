@@ -39,14 +39,10 @@ class TimeSeriesServer final : public TimeSeriesService::Service {
 
 public:
   TimeSeriesServer(int n_buckets, int bucket_size, float band_percentage) {
-    idx_ = new tsidx::TimeSeriesIndex(n_buckets, bucket_size,
-				     band_percentage);
+    idx_ = std::make_unique<tsidx::TimeSeriesIndex>(n_buckets, bucket_size, band_percentage);
   }
   
-  ~TimeSeriesServer() {
-    
-    delete idx_;
-  }
+  ~TimeSeriesServer() {}
   
   Status insert(ServerContext *context,
 		const TimeSeries *ts,
@@ -101,24 +97,23 @@ public:
   Status load(ServerContext *context,
 	      const LoadIndexRequest *request,
 	      LoadIndexResponse *response) override {
-
     int n_buckets = idx_ -> n_buckets;
     int bucket_size = idx_ -> bucket_size;
     float band_percentage = idx_ -> band_percentage;
-    delete idx_;
-    idx_ = new tsidx::TimeSeriesIndex(request -> name(),
+    idx_ = std::make_unique<tsidx::TimeSeriesIndex>(request -> name(),
 				      n_buckets,
 				      bucket_size,
 				      band_percentage);
+    LOG(INFO) << "DONE LOADING";
     response -> set_response(0);
+    LOG(INFO) << "DONE LOADING 4 Real";    
     return Status::OK;
   }
   
   
   
 private:
-  tsidx::TimeSeriesIndex *idx_;
-  
+  std::unique_ptr<tsidx::TimeSeriesIndex> idx_;
 };
 
 
@@ -137,6 +132,6 @@ void run_server(int n_buckets, int bucket_size, float band_percentage) {
 
 
 int main(int argc, char **argv) {
-  run_server(100, 64, 0.75);
+  run_server(100, 10, 0.75);
   return 0;
 }

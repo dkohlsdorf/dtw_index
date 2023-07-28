@@ -218,6 +218,7 @@ namespace tsidx {
 	buckets[bucket].push_back(id);
       }
     }
+    LOG(INFO) << "DONE";
   }
 
 }

@@ -59,7 +59,7 @@ TimeSeriesIndex::TimeSeriesIndex(std::string name,
   while(true) {
     std::stringstream ss_name;
     ss_name << "./" << name << "/ts_bucket" << i << ".bin";    
-
+    LOG(INFO) << "reading timeseries: " << ss_name.str();
     std::ifstream file_ts;
     file_ts.open(ss_name.str(), std::fstream::binary);
     
@@ -82,10 +82,12 @@ TimeSeriesIndex::TimeSeriesIndex(std::string name,
   std::ifstream file_idx;
   file_idx.open(ss_name_idx.str(), std::fstream::binary);
   std::vector<unsigned char> buffer_idx(std::istreambuf_iterator<char>(file_idx), {});
-
-  std::vector<std::vector<int>> bb;
-  deserialize_tree(root, leaf_map, bb, buffer_idx.data());
   
+  std::vector<std::vector<int>> bb;
+  root = new Node;
+  deserialize_tree(root, leaf_map, bb, buffer_idx.data());
+
+  LOG(INFO) << "CONVERTING Buckets";
   for(const auto& b : bb) {
     ThreadsafeCollection<int> *collection = new ThreadsafeCollection<int>();
     for(const auto id : b) {
@@ -93,7 +95,9 @@ TimeSeriesIndex::TimeSeriesIndex(std::string name,
     }
     buckets.push_back(collection);
   }
-  
+
+
+  LOG(INFO) << "reading timeseries";
   std::stringstream ss_name;
   ss_name << "./" << name << IDX_TS;    
   std::ifstream file_ts;
@@ -104,16 +108,18 @@ TimeSeriesIndex::TimeSeriesIndex(std::string name,
   while(start < len) {
     TimeSeries ts;
     start = deserialize_ts(start, ts, buffer_ts.data());
+    LOG(INFO) << "read ts from: " << start << "/" << len;
     indexing_batch.push_back(ts);
   }
-
-
+  
+  LOG(INFO) << "Done reading";
   this -> n_buckets = n_buckets;
   this -> band_percentage = band_percentage;
   this -> bucket_size = bucket_size;  
 
   status = IDX_READY;
   n = i;
+  LOG(INFO) << "Done";
 }
   
 TimeSeriesIndex::~TimeSeriesIndex() {

@@ -187,6 +187,7 @@ void build_tree(const TimeSeriesBatch& batch, int bucket_size, float band_percen
 }
 
 int search(const TimeSeries &ts, const TimeSeriesBatch& batch, Node *node, float band_percentage) {
+  LOG(INFO) << "\t ... " << node -> node_id << " " << ts.id; 
   if(node -> left == NULL && node -> right == NULL) {
     return node -> node_id;
   }

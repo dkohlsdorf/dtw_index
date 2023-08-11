@@ -223,8 +223,10 @@ int TimeSeriesIndex::reindex(int n_samples) {
       int node = search(ts, indexing_batch, root, band_percentage);      
       int bucket = leaf_map[node];
       buckets[bucket] -> insert(ts.id);
+      LOG(INFO) << "insert: " << ts.id << " / " << n;      
     }
   }
+  LOG(INFO) << "DONE INDEXING";
   status = IDX_READY;
   return IDX_READY;
 }

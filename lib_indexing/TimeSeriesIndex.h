@@ -35,9 +35,9 @@ namespace tsidx {
   public:   
     TimeSeriesIndex(int n_buckets, int bucket_size,
 		    float band_percentage);
-    TimeSeriesIndex(std::string name, int n_buckets, int bucket_size,
-		    float band_percentage);
     ~TimeSeriesIndex();
+
+    void load(std::string name);
     int insert(TimeSeries& ts);
     int search_idx(const TimeSeries& ts, std::vector<int> &nearest);
     int reindex(int n_samples);

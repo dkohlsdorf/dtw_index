@@ -39,7 +39,7 @@ class TimeSeriesServer final : public TimeSeriesService::Service {
 
 public:
   TimeSeriesServer(int n_buckets, int bucket_size, float band_percentage) {
-    idx_ = std::make_unique<tsidx::TimeSeriesIndex>(n_buckets, bucket_size, band_percentage);
+    idx_ = std::make_shared<tsidx::TimeSeriesIndex>(n_buckets, bucket_size, band_percentage);
   }
   
   ~TimeSeriesServer() {}
@@ -100,10 +100,7 @@ public:
     int n_buckets = idx_ -> n_buckets;
     int bucket_size = idx_ -> bucket_size;
     float band_percentage = idx_ -> band_percentage;
-    idx_ = std::make_unique<tsidx::TimeSeriesIndex>(request -> name(),
-				      n_buckets,
-				      bucket_size,
-				      band_percentage);
+    idx_ -> load(request -> name());
     LOG(INFO) << "DONE LOADING";
     response -> set_response(0);
     LOG(INFO) << "DONE LOADING 4 Real";    
@@ -113,7 +110,7 @@ public:
   
   
 private:
-  std::unique_ptr<tsidx::TimeSeriesIndex> idx_;
+  std::shared_ptr<tsidx::TimeSeriesIndex> idx_;
 };
 
 

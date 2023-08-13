@@ -51,10 +51,7 @@ TimeSeriesIndex::TimeSeriesIndex(int n_buckets,
   root = NULL;
 }
 
-TimeSeriesIndex::TimeSeriesIndex(std::string name,
-				 int n_buckets,
-				 int bucket_size,
-				 float band_percentage) {
+void TimeSeriesIndex::load(std::string name) {
   int i = 0;
   while(true) {
     std::stringstream ss_name;
@@ -113,10 +110,6 @@ TimeSeriesIndex::TimeSeriesIndex(std::string name,
   }
   
   LOG(INFO) << "Done reading";
-  this -> n_buckets = n_buckets;
-  this -> band_percentage = band_percentage;
-  this -> bucket_size = bucket_size;  
-
   status = IDX_READY;
   n = i;
   LOG(INFO) << "Done";

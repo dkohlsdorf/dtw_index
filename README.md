@@ -1,3 +1,4 @@
+# -- MOVED TO https://github.com/dkohlsdorf/wdp-ds
 # Time Series Indexing
 
 Builds a time series index by recursively partitioning the dataset
